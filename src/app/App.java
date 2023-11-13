@@ -74,7 +74,7 @@ public class App {
                 if (balance == 1) {
                     System.out.println();
                     System.out.println("Xin chao admin id = " + balance);
-                    // homeAdminPage(conn);
+                    homeAdminPage(conn);
                 } else {
                     System.out.println();
                     userIdLogin = balance;
@@ -132,14 +132,52 @@ public class App {
         }
     }
 
+    public static void homeAdminPage(Connection conn) {
+        System.out.println("----------------------Trang admin--------------------");
+        Scanner sc = new Scanner(System.in);
+        int chosse = 0;
+        do {
+            switch (chosse) {
+                case 1:
+                    showMenuAdmin();
+                    System.out.println("Xem danh sach san pham");
+                    showMenuAdmin();
+                    break;
+                case 2:
+                    showMenuAdmin();
+                    System.out.println("Them san pham");
+                    showMenuAdmin();
+
+                    break;
+
+                case 3:
+                    showMenuAdmin();
+                    System.out.println("Xoa san pham");
+                    showMenuAdmin();
+
+                    break;
+                case 4:
+                    showMenuAdmin();
+                    System.out.println("Xem danh sach order");
+                    showMenuAdmin();
+                    break;
+                default:
+                    showMenuAdmin();
+                    break;
+            }
+            System.out.print("Nhap lua chon cua ban: ");
+            chosse = sc.nextInt();
+        } while (chosse != 0);
+    }
+
     public static void showMenuAdmin() {
         System.out.println("1. Xem danh sach san pham");
         System.out.println("2. Them san pham");
         System.out.println("3. Xoa san pham");
-        System.out.println("4. Xem danh muc");
-        System.out.println("5. Them danh muc");
-        System.out.println("6. Xem danh sach order");
+        System.out.println("4. Xem danh sach order");
 
         System.out.println("0. Dang xuat");
     }
+
+    
 }
