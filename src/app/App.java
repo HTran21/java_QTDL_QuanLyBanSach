@@ -30,10 +30,10 @@ public class App {
     }
 
     public static void displayCustomerData(Connection connection) {
-        try (PreparedStatement preparedStatement = connection.prepareStatement("SELECT * FROM khachhang");
+        try (PreparedStatement preparedStatement = connection.prepareStatement("SELECT * FROM user");
                 ResultSet resultSet = preparedStatement.executeQuery()) {
 
-            System.out.println("idUser\tfullName\tphone\tgender\tpassword\taddress");
+            System.out.println("idUser\tfullName\tphone\tgender\tpassword\taddress\trole");
             while (resultSet.next()) {
                 int idUser = resultSet.getInt("idUser");
                 String fullName = resultSet.getString("fullName");
@@ -41,9 +41,11 @@ public class App {
                 String gender = resultSet.getString("gender");
                 String password = resultSet.getString("password");
                 String address = resultSet.getString("address");
+                String role = resultSet.getString("role");
 
                 System.out.println(
-                        idUser + "\t" + fullName + "\t" + phone + "\t" + gender + "\t" + password + "\t" + address);
+                        idUser + "\t" + fullName + "\t" + phone + "\t" + gender + "\t" + password + "\t" + address
+                                + "\t" + role);
             }
         } catch (SQLException e) {
             e.printStackTrace();
