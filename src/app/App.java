@@ -171,6 +171,13 @@ public class App {
                     showListUser(conn);
                     showMenuAdmin();
                     break;
+
+                case 6:
+                    showMenuAdmin();
+                    displayOrderList(conn);
+                    showMenuAdmin();
+                    break;
+
                 default:
                     showMenuAdmin();
                     break;
@@ -187,7 +194,6 @@ public class App {
         System.out.println("4. Xoa san pham");
         System.out.println("5. Xem danh sach khach hang");
         System.out.println("6. Xem danh sach don hang");
-        System.out.println("7. Xem chi tiet don hang ");
 
         System.out.println("0. Dang xuat");
     }
@@ -386,6 +392,42 @@ public class App {
                             "+-------+--------------------------------+---------------+-------------------------+----------------------+");
                 }
             }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void displayOrderList(Connection conn) {
+        try {
+            // Prepare the call to the stored procedure
+            CallableStatement cStmt = conn.prepareCall("{CALL GetOrderList()}");
+
+            // Execute the stored procedure
+            ResultSet rs = cStmt.executeQuery();
+
+            System.out.printf("| %-12s | %-20s | %-20s | %-8s | %-12s | %-10s | %-20s |%n",
+                    "Ma DH", "Ten Tai Khoan", "Ten sach", "So luong", "Gia", "Tong Tien", "Dia chi giao hang");
+            System.out.println(
+                    "|--------------|----------------------|----------------------|----------|--------------|------------|----------------------|");
+
+            while (rs.next()) {
+                int orderId = rs.getInt("idOrderList");
+                String userName = rs.getString("username");
+                String bookName = rs.getString("nameBook");
+                int quantity = rs.getInt("quantity");
+                int totalCost = rs.getInt("totalCost");
+                int bookPrice = rs.getInt("price");
+                String address = rs.getString("address");
+
+                // Display the order information in a tabular format
+                System.out.printf("| %-12d | %-20s | %-20s | %-8d | %-12d | %-10d | %-20s |%n",
+                        orderId, userName, bookName, quantity, bookPrice, totalCost, address);
+            }
+
+            // Close the result set and statement
+            rs.close();
+            cStmt.close();
+
         } catch (SQLException e) {
             e.printStackTrace();
         }
