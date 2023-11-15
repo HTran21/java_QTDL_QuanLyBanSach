@@ -1,5 +1,6 @@
 package app;
 
+import java.util.Date;
 import java.util.Scanner;
 
 import java.sql.Connection;
@@ -81,7 +82,7 @@ public class App {
                     System.out.println();
                     userIdLogin = balance;
                     System.out.println("Thanh cong. Ban da dang nhap id nguoi dung " + balance);
-                    // homePage(conn);
+                    homeUserPage(conn);
                 }
                 // giao dien trang chu
             } else {
@@ -134,6 +135,8 @@ public class App {
         }
     }
 
+    // ========================== ADMIN==============================
+
     public static void homeAdminPage(Connection conn) {
         System.out.println("----------------------Trang admin--------------------");
         Scanner sc = new Scanner(System.in);
@@ -183,6 +186,8 @@ public class App {
         System.out.println("3. Them san pham");
         System.out.println("4. Xoa san pham");
         System.out.println("5. Xem danh sach khach hang");
+        System.out.println("6. Xem danh sach don hang");
+        System.out.println("7. Xem chi tiet don hang ");
 
         System.out.println("0. Dang xuat");
     }
@@ -385,4 +390,185 @@ public class App {
             e.printStackTrace();
         }
     }
+
+    // ====================== USER ==============================
+
+    public static void showMenuHome() {
+        System.out.println("1. Xem danh sach tat ca cac quyen sach");
+        System.out.println("2. Xem chi tiet sach");
+        System.out.println("3. Mua sach");
+        System.out.println("4. Xem danh sach da mua hang");
+        System.out.println("5. Xem thong tin ca nhan ");
+
+        System.out.println("0. Dang xuat");
+    }
+
+    public static void homeUserPage(Connection conn) {
+        int chosse = 0;
+        do {
+            System.out.println(
+                    "\n----------------------- Chao mung ban den nha sach lon nhat Viet Nam -------------------------\n");
+            Scanner sc = new Scanner(System.in);
+            switch (chosse) {
+                case 1:
+                    showMenuHome();
+                    showListBook(conn);
+                    showMenuHome();
+                    break;
+                case 2:
+                    showMenuHome();
+                    showBookDetail(conn);
+                    showMenuHome();
+
+                    break;
+
+                case 3:
+                    showMenuHome();
+                    createOrder(conn);
+                    showMenuHome();
+
+                    break;
+
+                case 4:
+                    showMenuHome();
+                    displayCustomerOrders(conn, userIdLogin);
+                    showMenuHome();
+
+                    break;
+
+                case 5:
+                    showMenuHome();
+                    displayUserInformation(conn, userIdLogin);
+                    showMenuHome();
+
+                    break;
+                default:
+                    showMenuHome();
+                    break;
+            }
+            System.out.print("Nhap lua chon cua ban: ");
+            chosse = sc.nextInt();
+        } while (chosse != 0);
+
+    }
+
+    public static void createOrder(Connection conn) {
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("------------------- Mua sach --------------------");
+
+        System.out.print("\nNhap ID sach: ");
+        int bookID = scanner.nextInt();
+        scanner.nextLine();
+
+        System.out.print("So luong: ");
+        int quantity = scanner.nextInt();
+        scanner.nextLine();
+
+        System.out.print("Nhap dia chi nhan hang: ");
+        String address = scanner.nextLine();
+
+        try {
+            CallableStatement cStmt = null;
+            cStmt = conn.prepareCall("{? = call OrderBook(?, ?, ?, ?)}");
+
+            cStmt.setInt(2, userIdLogin);
+            cStmt.setInt(3, bookID);
+            cStmt.setInt(4, quantity);
+            cStmt.setString(5, address);
+
+            cStmt.registerOutParameter(1, Types.INTEGER);
+            cStmt.executeUpdate();
+
+            int result = cStmt.getInt(1);
+            if (result == 1) {
+                System.out.println(" \n <======= Dat hang thanh cong =======> \n");
+            } else {
+                System.out.println("\n<======= So luong san pham khong du de cung cap cho ban !!! =======> \n ");
+            }
+
+        } catch (Exception e) {
+            System.out.println(e);
+        }
+
+    }
+
+    public static void displayCustomerOrders(Connection conn, int customerId) {
+        try {
+            // Prepare the call to the stored procedure
+            CallableStatement cStmt = conn.prepareCall("{CALL GetCustomerOrders(?)}");
+            cStmt.setInt(1, customerId);
+
+            // Execute the stored procedure
+            ResultSet rs = cStmt.executeQuery();
+
+            System.out.println('\n');
+
+            // Display the results
+            System.out.printf("| %-9s | %-20s | %-20s | %-8s | %-12s | %-10s | %-15s | %-20s |%n",
+                    "Order ID", "Ten Khach Hang", "Ten Sach", "So Luong", "Gia", "Tong Tien", "Ngay Dat",
+                    "Dia chi giao hang");
+            System.out.println(
+                    "|-----------|----------------------|----------------------|----------|--------------|------------|-----------------|----------------------|");
+
+            while (rs.next()) {
+                int orderId = rs.getInt("idOrderList");
+                String userName = rs.getString("userName");
+                String bookName = rs.getString("bookName");
+                int quantity = rs.getInt("quantity");
+                int bookPrice = rs.getInt("price");
+                int totalCost = rs.getInt("totalCost");
+                Date date = rs.getDate("date");
+                String address = rs.getString("address");
+
+                // Display the information in a tabular format
+                System.out.printf("| %-9d | %-20s | %-20s | %-8d | %-12d | %-10d | %-15s | %-20s |%n",
+                        orderId, userName, bookName, quantity, bookPrice, totalCost, date, address);
+            }
+
+            System.out.println('\n');
+
+            // Close the result set and statement
+            rs.close();
+            cStmt.close();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void displayUserInformation(Connection conn, int userId) {
+        try {
+            // Prepare the call to the stored procedure
+            CallableStatement cStmt = conn.prepareCall("{CALL GetUserInformationById(?)}");
+            cStmt.setInt(1, userId);
+
+            // Execute the stored procedure
+            ResultSet rs = cStmt.executeQuery();
+
+            // Display the user information
+            if (rs.next()) {
+                int idUser = rs.getInt("idUser");
+                String name = rs.getString("name");
+                String phone = rs.getString("phone");
+                String address = rs.getString("address");
+
+                System.out.println('\n');
+                System.out.println("User Information:");
+                System.out.printf("| %-9s | %-20s | %-15s | %-20s %n", "User ID", "Name", "Phone", "Address");
+                System.out.println("|-----------|----------------------|-----------------|----------------------|");
+                System.out.printf("| %-9d | %-20s | %-15s | %-20s %n", idUser, name, phone, address);
+                System.out.println('\n');
+            } else {
+                System.out.println("User not found");
+            }
+
+            // Close the result set and statement
+            rs.close();
+            cStmt.close();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
 }
