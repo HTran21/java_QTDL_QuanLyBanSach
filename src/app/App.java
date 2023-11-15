@@ -4,6 +4,8 @@ import java.util.Scanner;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Types;
 import java.sql.CallableStatement;
 
@@ -140,25 +142,30 @@ public class App {
             switch (chosse) {
                 case 1:
                     showMenuAdmin();
-                    System.out.println("Xem danh sach san pham");
+                    showListBook(conn);
                     showMenuAdmin();
                     break;
                 case 2:
                     showMenuAdmin();
-                    System.out.println("Them san pham");
+                    showBookDetail(conn);
                     showMenuAdmin();
 
                     break;
 
                 case 3:
                     showMenuAdmin();
-                    System.out.println("Xoa san pham");
+                    createBook(conn);
                     showMenuAdmin();
 
                     break;
                 case 4:
                     showMenuAdmin();
-                    System.out.println("Xem danh sach order");
+                    deleteBook(conn);
+                    showMenuAdmin();
+                    break;
+                case 5:
+                    showMenuAdmin();
+                    showListUser(conn);
                     showMenuAdmin();
                     break;
                 default:
@@ -172,11 +179,210 @@ public class App {
 
     public static void showMenuAdmin() {
         System.out.println("1. Xem danh sach san pham");
-        System.out.println("2. Them san pham");
-        System.out.println("3. Xoa san pham");
-        System.out.println("4. Xem danh sach order");
+        System.out.println("2. Xem chi tiet san pham");
+        System.out.println("3. Them san pham");
+        System.out.println("4. Xoa san pham");
+        System.out.println("5. Xem danh sach khach hang");
 
         System.out.println("0. Dang xuat");
     }
 
+    public static void showListBook(Connection conn) {
+        try (CallableStatement statement = conn.prepareCall("{call ShowBookList()}")) {
+            boolean hasResults = statement.execute();
+
+            if (hasResults) {
+                try (ResultSet resultSet = statement.getResultSet()) {
+                    System.out.println(
+                            "+-------+--------------------------------+---------------+-------------------------+----------------------+----------+----------+");
+                    System.out.printf("| %-5s| %-30s | %-14s| %-24s| %-20s | %-8s | %-8s |%n",
+                            "idBook", "name", "type", "author", "description", "price", "quantity");
+                    System.out.println(
+                            "+-------+--------------------------------+---------------+-------------------------+----------------------+----------+----------+");
+
+                    while (resultSet.next()) {
+                        int idBook = resultSet.getInt("idBook");
+                        String name = resultSet.getString("name");
+                        String type = resultSet.getString("type");
+                        String author = resultSet.getString("author");
+                        String description = resultSet.getString("description");
+                        int price = resultSet.getInt("price");
+                        int quantity = resultSet.getInt("quantity");
+
+                        System.out.printf("| %-5d | %-30s | %-14s| %-24s| %-20.20s | %-8d | %-8d |%n",
+                                idBook, name, type, author, description, price, quantity);
+                    }
+                    System.out.println(
+                            "+-------+--------------------------------+---------------+-------------------------+----------------------+----------+----------+");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void showBookDetail(Connection conn) {
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("------------------- Xem chi tiet sach --------------------");
+
+        System.out.print("\nNhap ID sach: ");
+        int bookID = scanner.nextInt();
+
+        try {
+            CallableStatement statement = conn.prepareCall("{call ShowDetailBook(?)}");
+            statement.setInt(1, bookID);
+            boolean hasResults = statement.execute();
+
+            if (hasResults) {
+                try (ResultSet resultSet = statement.getResultSet()) {
+                    System.out.println(
+                            "+-------+--------------------------------+---------------+-------------------------+----------------------+----------+----------+");
+                    // System.out.printf("| %-5s| %-30s | %-14s| %-24s| %-20.20s | %-8s | %-8s |%n",
+                    // "idBook", "name", "type", "author", "description", "price", "quantity");
+                    // System.out.println(
+                    // "+-------+--------------------------------+---------------+-------------------------+----------------------+----------+----------+");
+
+                    while (resultSet.next()) {
+                        int idBook = resultSet.getInt("idBook");
+                        String name = resultSet.getString("name");
+                        String type = resultSet.getString("type");
+                        String author = resultSet.getString("author");
+                        String description = resultSet.getString("description");
+                        int price = resultSet.getInt("price");
+                        int quantity = resultSet.getInt("quantity");
+
+                        // System.out.printf("| %-5d | %-30s | %-14s| %-24s| %-20.20s | %-8d | %-8d
+                        // |%n",
+                        // idBook, name, type, author, description, price, quantity);
+                        System.out.println("ID Book: " + idBook);
+                        System.out.println("Ten sach: " + name);
+                        System.out.println("The loai: " + type);
+                        System.out.println("Tac gia: " + author);
+                        System.out.println("Mo ta: " + description);
+                        System.out.println("Gia: " + price);
+                        System.out.println("So Luong: " + quantity);
+
+                    }
+                    System.out.println(
+                            "+-------+--------------------------------+---------------+-------------------------+----------------------+----------+----------+\n");
+                }
+            }
+
+        } catch (SQLException e) {
+            System.out.println("\nSach khong ton tai. \n");
+            // e.printStackTrace();
+        }
+    }
+
+    public static void createBook(Connection conn) {
+        Scanner sc = new Scanner(System.in);
+        System.out.println("------------------- Them sach --------------------");
+
+        System.out.print("Nhap ten sach: ");
+        String name = sc.nextLine();
+
+        System.out.print("Nhap the loai: ");
+        String type = sc.nextLine();
+
+        System.out.print("Nhap tac gia: ");
+        String author = sc.nextLine();
+
+        System.out.print("Nhap mo ta: ");
+        String description = sc.nextLine();
+
+        System.out.print("Nhap gia: ");
+        int price = sc.nextInt();
+
+        System.out.print("Nhap so luong: ");
+        int quantity = sc.nextInt();
+
+        try (CallableStatement cStmt = conn.prepareCall("{? =call createBook(?, ?, ?, ?, ?, ?)}")) {
+            cStmt.setString(2, name);
+            cStmt.setString(3, type);
+            cStmt.setString(4, author);
+            cStmt.setString(5, description);
+            cStmt.setInt(6, price);
+            cStmt.setInt(7, quantity);
+
+            cStmt.registerOutParameter(1, Types.INTEGER);
+
+            cStmt.execute();
+            int balance = cStmt.getInt(1);
+
+            if (balance != -1) {
+                System.out.println("Them sach thanh cong. Voi Id sach = " + balance);
+
+            } else {
+                System.out.println("Sach da ton tai !!!!");
+            }
+
+        } catch (SQLException e) {
+            // System.out.println("Them sach that bai !!!! > Loi : " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    public static void deleteBook(Connection conn) {
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("------------------- Xoa sach --------------------");
+
+        System.out.print("\nNhap ID sach: ");
+        int bookID = scanner.nextInt();
+        try {
+            CallableStatement cStmt = conn.prepareCall("{? =call DeleteBook(?)}");
+            cStmt.registerOutParameter(1, java.sql.Types.INTEGER); // Giá trị trả về
+            cStmt.setInt(2, bookID);
+
+            // Thực hiện gọi hàm
+            cStmt.execute();
+
+            // Lấy giá trị trả về từ hàm
+            int result = cStmt.getInt(1);
+            if (result == 1) {
+                System.out.println("Xóa sách thành công. \n");
+                System.out.println("-------------------------------------------------\n");
+            } else if (result == -1) {
+                System.out.println("Sách không tồn tại. \n");
+            } else {
+                System.out.println("Xóa sách thất bại hoặc có lỗi xảy ra. \n");
+            }
+
+        } catch (SQLException e) {
+            // System.out.println("Xoa sach that bai !!!! > Loi : " + e.getMessage());
+            e.printStackTrace();
+        }
+
+    }
+
+    public static void showListUser(Connection conn) {
+        try (CallableStatement statement = conn.prepareCall("{call ShowUserList()}")) {
+            boolean hasResults = statement.execute();
+
+            if (hasResults) {
+                try (ResultSet resultSet = statement.getResultSet()) {
+                    System.out.println(
+                            "+-------+--------------------------------+---------------+-------------------------+----------------------+");
+                    System.out.printf("| %-5s| %-30s | %-14s| %-24s| %-20s |%n",
+                            "idUser", "name", "phone", "password", "addresss");
+                    System.out.println(
+                            "+-------+--------------------------------+---------------+-------------------------+----------------------+");
+
+                    while (resultSet.next()) {
+                        int idUser = resultSet.getInt("idUser");
+                        String name = resultSet.getString("name");
+                        String phone = resultSet.getString("phone");
+                        String password = resultSet.getString("password");
+                        String address = resultSet.getString("address");
+
+                        System.out.printf("| %-5d | %-30s | %-14s| %-24s| %-20.20s |%n",
+                                idUser, name, phone, password, address);
+                    }
+                    System.out.println(
+                            "+-------+--------------------------------+---------------+-------------------------+----------------------+");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
 }
